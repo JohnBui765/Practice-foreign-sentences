@@ -59,63 +59,64 @@
   </div>
 
   <script>
-    let modelSentence = "";
-    let displayDuration = 3;
+    window.onload = function () {
+      let modelSentence = "";
+      let displayDuration = 3;
 
-    const practiceInput = document.getElementById("practiceInput");
-    const submitButton = document.getElementById("submitButton");
+      const practiceInput = document.getElementById("practiceInput");
+      const submitButton = document.getElementById("submitButton");
 
-    // Enter key triggers submission
-    practiceInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        submitButton.click();
-      }
-    });
-
-    function setModel() {
-      const input = document.getElementById("modelInput").value.trim();
-      if (input) {
-        modelSentence = input;
-        document.getElementById("model-section").style.display = "none";
-        document.getElementById("practice-section").style.display = "block";
-        document.getElementById("practiceInput").focus();
-      }
-    }
-
-    function updateTimer() {
-      const slider = document.getElementById("timerSlider");
-      displayDuration = parseInt(slider.value);
-      document.getElementById("timerValue").textContent = displayDuration;
-    }
-
-    function submitPractice() {
-      const practice = document.getElementById("practiceInput").value.trim();
-      const resultDiv = document.getElementById("resultDisplay");
-
-      const modelWords = modelSentence.split(" ");
-      const inputWords = practice.split(" ");
-
-      let resultHTML = "";
-      for (let i = 0; i < modelWords.length; i++) {
-        if (inputWords[i] === modelWords[i]) {
-          resultHTML += modelWords[i] + " ";
-        } else {
-          resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
+      practiceInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          submitButton.click();
         }
-      }
+      });
 
-      for (let i = modelWords.length; i < inputWords.length; i++) {
-        resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
-      }
+      window.setModel = function () {
+        const input = document.getElementById("modelInput").value.trim();
+        if (input) {
+          modelSentence = input;
+          document.getElementById("model-section").style.display = "none";
+          document.getElementById("practice-section").style.display = "block";
+          document.getElementById("practiceInput").focus();
+        }
+      };
 
-      resultDiv.innerHTML = resultHTML.trim();
-      document.getElementById("practiceInput").value = "";
+      window.updateTimer = function () {
+        const slider = document.getElementById("timerSlider");
+        displayDuration = parseInt(slider.value);
+        document.getElementById("timerValue").textContent = displayDuration;
+      };
 
-      setTimeout(() => {
-        resultDiv.innerHTML = "";
-      }, displayDuration * 1000);
-    }
+      window.submitPractice = function () {
+        const practice = document.getElementById("practiceInput").value.trim();
+        const resultDiv = document.getElementById("resultDisplay");
+
+        const modelWords = modelSentence.split(" ");
+        const inputWords = practice.split(" ");
+
+        let resultHTML = "";
+        for (let i = 0; i < modelWords.length; i++) {
+          if (inputWords[i] === modelWords[i]) {
+            resultHTML += modelWords[i] + " ";
+          } else {
+            resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
+          }
+        }
+
+        for (let i = modelWords.length; i < inputWords.length; i++) {
+          resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
+        }
+
+        resultDiv.innerHTML = resultHTML.trim();
+        document.getElementById("practiceInput").value = "";
+
+        setTimeout(() => {
+          resultDiv.innerHTML = "";
+        }, displayDuration * 1000);
+      };
+    };
   </script>
 </body>
 </html>
