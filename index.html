@@ -30,6 +30,11 @@
     }
     .text-red {
       color: red;
+      text-decoration: line-through;
+    }
+    .text-green {
+      color: green;
+      font-weight: bold;
     }
     .text-yellow {
       color: orange;
@@ -39,6 +44,7 @@
       font-size: 1.2rem;
       min-height: 1.5em;
       text-align: center;
+      line-height: 1.8;
     }
   </style>
 </head>
@@ -48,7 +54,6 @@
     <input type="text" id="modelInput" placeholder="Type the sentence to memorize" />
     <button id="startButton" onclick="setModel()">Start Practice</button>
   </div>
-
   <div id="practice-section" class="hidden">
     <h2>Practice Area</h2>
     <input type="text" id="practiceInput" placeholder="Type the sentence from memory" />
@@ -57,31 +62,33 @@
     <input type="range" id="timerSlider" min="1" max="10" value="3" oninput="updateTimer()" />
     <div id="resultDisplay"></div>
   </div>
-
   <script>
     window.onload = function () {
       let modelSentence = "";
       let displayDuration = 3;
-
+      
+      // Get DOM elements
       const modelInput = document.getElementById("modelInput");
-      const practiceInput = document.getElementById("practiceInput");
       const startButton = document.getElementById("startButton");
+      const practiceInput = document.getElementById("practiceInput");
       const submitButton = document.getElementById("submitButton");
-
+      
+      // Add Enter key event listener for model input
       modelInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
           event.preventDefault();
           startButton.click();
         }
       });
-
+      
+      // Add Enter key event listener for practice input
       practiceInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
           event.preventDefault();
           submitButton.click();
         }
       });
-
+      
       window.setModel = function () {
         const input = modelInput.value.trim();
         if (input) {
@@ -91,39 +98,50 @@
           practiceInput.focus();
         }
       };
-
+      
       window.updateTimer = function () {
         const slider = document.getElementById("timerSlider");
         displayDuration = parseInt(slider.value);
         document.getElementById("timerValue").textContent = displayDuration;
       };
-
+      
       window.submitPractice = function () {
         const practice = practiceInput.value.trim();
         const resultDiv = document.getElementById("resultDisplay");
-
-        if (!practice) return;
-
+        
+        if (!practice) {
+          return; // Don't submit empty input
+        }
+        
         const modelWords = modelSentence.split(" ");
         const inputWords = practice.split(" ");
-
         let resultHTML = "";
+        
         for (let i = 0; i < modelWords.length; i++) {
           if (i < inputWords.length && inputWords[i] === modelWords[i]) {
+            // Correct word
             resultHTML += modelWords[i] + " ";
           } else {
-            resultHTML += `<span class="text-red">${i < inputWords.length ? inputWords[i] : "[missing]"}</span> `;
+            // Incorrect or missing word - show wrong input and correct word
+            if (i < inputWords.length) {
+              // User typed a word but it's incorrect
+              resultHTML += `<span class="text-red">${inputWords[i]}</span> <span class="text-green">${modelWords[i]}</span> `;
+            } else {
+              // User didn't type this word (missing)
+              resultHTML += `<span class="text-red">[missing]</span> <span class="text-green">${modelWords[i]}</span> `;
+            }
           }
         }
-
+        
+        // Extra words typed by user
         for (let i = modelWords.length; i < inputWords.length; i++) {
-          resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
+          resultHTML += `<span class="text-yellow">${inputWords[i]} [extra]</span> `;
         }
-
+        
         resultDiv.innerHTML = resultHTML.trim();
         practiceInput.value = "";
-        practiceInput.focus();
-
+        practiceInput.focus(); // Keep focus for next attempt
+        
         setTimeout(() => {
           resultDiv.innerHTML = "";
         }, displayDuration * 1000);
