@@ -84,56 +84,66 @@
   </div>
 
   <script>
-    let modelSentence = "";
-    let displayDuration = 3;
+  let modelSentence = "";
+  let displayDuration = 3;
 
-    function setModel() {
-      const input = document.getElementById("modelInput").value.trim();
-      if (input) {
-        modelSentence = input;
-        document.getElementById("model-section").style.display = "none";
-        document.getElementById("practice-section").style.display = "block";
-        document.getElementById("practiceInput").focus();
-      }
+  const practiceInput = document.getElementById("practiceInput");
+  const submitButton = document.getElementById("submitButton");
+
+  // ✅ Enter key submits practice sentence
+  practiceInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitButton.click();
     }
+  });
 
-    function updateTimer() {
-      const slider = document.getElementById("timerSlider");
-      displayDuration = parseInt(slider.value);
-      document.getElementById("timerValue").textContent = displayDuration;
+  function setModel() {
+    const input = document.getElementById("modelInput").value.trim();
+    if (input) {
+      modelSentence = input;
+      document.getElementById("model-section").style.display = "none";
+      document.getElementById("practice-section").style.display = "block";
+      document.getElementById("practiceInput").focus();
     }
-
-    function submitPractice() {
-      const practice = document.getElementById("practiceInput").value.trim();
-      const resultDiv = document.getElementById("resultDisplay");
-practiceInput.addEventListener("keydown", function (event) {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    submitButton.click();
   }
-});
-      const modelWords = modelSentence.split(" ");
-      const inputWords = practice.split(" ");
 
-      let resultHTML = "";
-      for (let i = 0; i < modelWords.length; i++) {
-        if (inputWords[i] === modelWords[i]) {
-          resultHTML += modelWords[i] + " ";
-        } else {
-          resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
-        }
-      }
-      for (let i = modelWords.length; i < inputWords.length; i++) {
-        resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
-      }
+  function updateTimer() {
+    const slider = document.getElementById("timerSlider");
+    displayDuration = parseInt(slider.value);
+    document.getElementById("timerValue").textContent = displayDuration;
+  }
 
-      resultDiv.innerHTML = resultHTML.trim();
-      setTimeout(() => {
-        resultDiv.innerHTML = "";
-        document.getElementById("practiceInput").value = "";
-        document.getElementById("practiceInput").focus();
-      }, displayDuration * 1000);
+  function submitPractice() {
+    const practice = document.getElementById("practiceInput").value.trim();
+    const resultDiv = document.getElementById("resultDisplay");
+
+    const modelWords = modelSentence.split(" ");
+    const inputWords = practice.split(" ");
+
+    let resultHTML = "";
+    for (let i = 0; i < modelWords.length; i++) {
+      if (inputWords[i] === modelWords[i]) {
+        resultHTML += modelWords[i] + " ";
+      } else {
+        resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
+      }
     }
+
+    for (let i = modelWords.length; i < inputWords.length; i++) {
+      resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
+    }
+
+    resultDiv.innerHTML = resultHTML.trim();
+
+    // Optional: Clear the input after submission
+    document.getElementById("practiceInput").value = "";
+
+    // Optional: Auto-hide the result after X seconds
+    setTimeout(() => {
+      resultDiv.innerHTML = "";
+    }, displayDuration * 1000);
+  }
   </script>
 </body>
 </html>
