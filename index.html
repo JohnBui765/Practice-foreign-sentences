@@ -106,7 +106,12 @@
     function submitPractice() {
       const practice = document.getElementById("practiceInput").value.trim();
       const resultDiv = document.getElementById("resultDisplay");
-
+practiceInput.addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    submitButton.click();
+  }
+});
       const modelWords = modelSentence.split(" ");
       const inputWords = practice.split(" ");
 
