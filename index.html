@@ -3,147 +3,119 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sentence Practice App</title>
-  <link rel="manifest" href="manifest.json" />
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-  </script>
+  <title>Sentence Practice</title>
   <style>
     body {
       font-family: sans-serif;
-      background-color: #f3f4f6;
+      margin: 2rem;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      margin: 0;
     }
-    .container {
-      background: white;
-      border-radius: 1rem;
-      padding: 2rem;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-      max-width: 600px;
-      width: 100%;
-    }
-    textarea, input[type="range"] {
-      width: 100%;
-      padding: 0.75rem;
+    input[type="text"] {
+      padding: 0.5rem;
       font-size: 1rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-      box-sizing: border-box;
+      width: 100%;
+      max-width: 400px;
     }
     button {
-      width: 100%;
-      padding: 0.75rem;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
       font-size: 1rem;
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
       cursor: pointer;
     }
-    .result {
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      background-color: #f9fafb;
-      font-size: 1.1rem;
-      min-height: 3rem;
+    .hidden {
+      display: none;
     }
-    .text-red { color: red; }
-    .text-yellow { color: orange; }
-    .label { font-size: 0.875rem; color: #555; margin-bottom: 0.25rem; display: block; }
+    .text-red {
+      color: red;
+    }
+    .text-yellow {
+      color: orange;
+    }
+    #resultDisplay {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      min-height: 1.5em;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 style="text-align:center;">Sentence Practice</h1>
+  <div id="model-section">
+    <h2>Enter the model sentence:</h2>
+    <input type="text" id="modelInput" placeholder="Type the sentence to memorize" />
+    <button onclick="setModel()">Start Practice</button>
+  </div>
 
-    <div id="model-section">
-      <label class="label">1. Enter the sentence you want to memorize:</label>
-      <textarea id="modelInput" rows="3" placeholder="Type the sentence to memorize..."></textarea>
-      <button onclick="setModel()">Set Model Sentence</button>
-    </div>
-
-    <div id="practice-section" style="display:none;">
-      <label class="label">2. Now practice typing it from memory:</label>
-      <textarea id="practiceInput" rows="3" placeholder="Type from memory..."></textarea>
-      <button onclick="submitPractice()">Submit</button>
-
-      <label class="label">Display time (seconds): <span id="timerValue">3</span></label>
-      <input type="range" min="1" max="10" value="3" id="timerSlider" onchange="updateTimer()" />
-
-      <div class="result" id="resultDisplay"></div>
-    </div>
+  <div id="practice-section" class="hidden">
+    <h2>Practice Area</h2>
+    <input type="text" id="practiceInput" placeholder="Type the sentence from memory" />
+    <button id="submitButton" onclick="submitPractice()">Submit</button>
+    <p>Display time: <span id="timerValue">3</span> sec</p>
+    <input type="range" id="timerSlider" min="1" max="10" value="3" oninput="updateTimer()" />
+    <div id="resultDisplay"></div>
   </div>
 
   <script>
-  let modelSentence = "";
-  let displayDuration = 3;
+    let modelSentence = "";
+    let displayDuration = 3;
 
-  const practiceInput = document.getElementById("practiceInput");
-  const submitButton = document.getElementById("submitButton");
+    const practiceInput = document.getElementById("practiceInput");
+    const submitButton = document.getElementById("submitButton");
 
-  // ✅ Enter key submits practice sentence
-  practiceInput.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      submitButton.click();
-    }
-  });
+    // Enter key triggers submission
+    practiceInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitButton.click();
+      }
+    });
 
-  function setModel() {
-    const input = document.getElementById("modelInput").value.trim();
-    if (input) {
-      modelSentence = input;
-      document.getElementById("model-section").style.display = "none";
-      document.getElementById("practice-section").style.display = "block";
-      document.getElementById("practiceInput").focus();
-    }
-  }
-
-  function updateTimer() {
-    const slider = document.getElementById("timerSlider");
-    displayDuration = parseInt(slider.value);
-    document.getElementById("timerValue").textContent = displayDuration;
-  }
-
-  function submitPractice() {
-    const practice = document.getElementById("practiceInput").value.trim();
-    const resultDiv = document.getElementById("resultDisplay");
-
-    const modelWords = modelSentence.split(" ");
-    const inputWords = practice.split(" ");
-
-    let resultHTML = "";
-    for (let i = 0; i < modelWords.length; i++) {
-      if (inputWords[i] === modelWords[i]) {
-        resultHTML += modelWords[i] + " ";
-      } else {
-        resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
+    function setModel() {
+      const input = document.getElementById("modelInput").value.trim();
+      if (input) {
+        modelSentence = input;
+        document.getElementById("model-section").style.display = "none";
+        document.getElementById("practice-section").style.display = "block";
+        document.getElementById("practiceInput").focus();
       }
     }
 
-    for (let i = modelWords.length; i < inputWords.length; i++) {
-      resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
+    function updateTimer() {
+      const slider = document.getElementById("timerSlider");
+      displayDuration = parseInt(slider.value);
+      document.getElementById("timerValue").textContent = displayDuration;
     }
 
-    resultDiv.innerHTML = resultHTML.trim();
+    function submitPractice() {
+      const practice = document.getElementById("practiceInput").value.trim();
+      const resultDiv = document.getElementById("resultDisplay");
 
-    // Optional: Clear the input after submission
-    document.getElementById("practiceInput").value = "";
+      const modelWords = modelSentence.split(" ");
+      const inputWords = practice.split(" ");
 
-    // Optional: Auto-hide the result after X seconds
-    setTimeout(() => {
-      resultDiv.innerHTML = "";
-    }, displayDuration * 1000);
-  }
+      let resultHTML = "";
+      for (let i = 0; i < modelWords.length; i++) {
+        if (inputWords[i] === modelWords[i]) {
+          resultHTML += modelWords[i] + " ";
+        } else {
+          resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
+        }
+      }
+
+      for (let i = modelWords.length; i < inputWords.length; i++) {
+        resultHTML += `<span class="text-yellow">${inputWords[i]}</span> `;
+      }
+
+      resultDiv.innerHTML = resultHTML.trim();
+      document.getElementById("practiceInput").value = "";
+
+      setTimeout(() => {
+        resultDiv.innerHTML = "";
+      }, displayDuration * 1000);
+    }
   </script>
 </body>
 </html>
