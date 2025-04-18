@@ -46,7 +46,7 @@
   <div id="model-section">
     <h2>Enter the model sentence:</h2>
     <input type="text" id="modelInput" placeholder="Type the sentence to memorize" />
-    <button onclick="setModel()">Start Practice</button>
+    <button id="startButton" onclick="setModel()">Start Practice</button>
   </div>
 
   <div id="practice-section" class="hidden">
@@ -63,8 +63,17 @@
       let modelSentence = "";
       let displayDuration = 3;
 
+      const modelInput = document.getElementById("modelInput");
       const practiceInput = document.getElementById("practiceInput");
+      const startButton = document.getElementById("startButton");
       const submitButton = document.getElementById("submitButton");
+
+      modelInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          startButton.click();
+        }
+      });
 
       practiceInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
@@ -74,12 +83,12 @@
       });
 
       window.setModel = function () {
-        const input = document.getElementById("modelInput").value.trim();
+        const input = modelInput.value.trim();
         if (input) {
           modelSentence = input;
           document.getElementById("model-section").style.display = "none";
           document.getElementById("practice-section").style.display = "block";
-          document.getElementById("practiceInput").focus();
+          practiceInput.focus();
         }
       };
 
@@ -90,18 +99,20 @@
       };
 
       window.submitPractice = function () {
-        const practice = document.getElementById("practiceInput").value.trim();
+        const practice = practiceInput.value.trim();
         const resultDiv = document.getElementById("resultDisplay");
+
+        if (!practice) return;
 
         const modelWords = modelSentence.split(" ");
         const inputWords = practice.split(" ");
 
         let resultHTML = "";
         for (let i = 0; i < modelWords.length; i++) {
-          if (inputWords[i] === modelWords[i]) {
+          if (i < inputWords.length && inputWords[i] === modelWords[i]) {
             resultHTML += modelWords[i] + " ";
           } else {
-            resultHTML += `<span class="text-red">${inputWords[i] || "[missing]"}</span> `;
+            resultHTML += `<span class="text-red">${i < inputWords.length ? inputWords[i] : "[missing]"}</span> `;
           }
         }
 
@@ -110,7 +121,8 @@
         }
 
         resultDiv.innerHTML = resultHTML.trim();
-        document.getElementById("practiceInput").value = "";
+        practiceInput.value = "";
+        practiceInput.focus();
 
         setTimeout(() => {
           resultDiv.innerHTML = "";
