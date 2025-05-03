@@ -13,11 +13,19 @@
       align-items: center;
       justify-content: center;
     }
+    textarea {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 600px;
+      resize: none;
+      transition: height 0.3s;
+    }
     input[type="text"] {
       padding: 0.5rem;
       font-size: 1rem;
       width: 100%;
-      max-width: 400px;
+      max-width: 600px;
     }
     button {
       padding: 0.5rem 1rem;
@@ -30,7 +38,6 @@
     }
     .text-red {
       color: red;
-      text-decoration: line-through;
     }
     .text-green {
       color: green;
@@ -43,29 +50,59 @@
       margin-top: 1rem;
       font-size: 1.2rem;
       min-height: 1.5em;
-      text-align: center;
+      text-align: left;
       line-height: 1.8;
+      width: 100%;
+      max-width: 600px;
+    }
+    .slider-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 10px 0;
+    }
+    .slider-container label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    .correction {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 5px;
+    }
+    .correction .text-green {
+      margin-bottom: 2px;
     }
   </style>
 </head>
 <body>
   <div id="model-section">
     <h2>Enter the model sentence:</h2>
-    <input type="text" id="modelInput" placeholder="Type the sentence to memorize" />
+    <textarea id="modelInput" placeholder="Type the sentence or paragraph to memorize" rows="3"></textarea>
+    <div class="slider-container">
+      <label><span>Input height:</span> <span id="heightValue">3</span> lines</label>
+      <input type="range" id="heightSlider" min="1" max="20" value="3" oninput="updateHeight()" />
+    </div>
     <button id="startButton" onclick="setModel()">Start Practice</button>
   </div>
   <div id="practice-section" class="hidden">
     <h2>Practice Area</h2>
-    <input type="text" id="practiceInput" placeholder="Type the sentence from memory" />
+    <textarea id="practiceInput" placeholder="Type the sentence from memory" rows="3"></textarea>
+    <div class="slider-container">
+      <label><span>Input height:</span> <span id="practiceHeightValue">3</span> lines</label>
+      <input type="range" id="practiceHeightSlider" min="1" max="20" value="3" oninput="updatePracticeHeight()" />
+    </div>
     <button id="submitButton" onclick="submitPractice()">Submit</button>
-    <p>Display time: <span id="timerValue">3</span> sec</p>
-    <input type="range" id="timerSlider" min="1" max="10" value="3" oninput="updateTimer()" />
+    <div class="slider-container">
+      <label><span>Display time:</span> <span id="timerValue">15</span> seconds</label>
+      <input type="range" id="timerSlider" min="5" max="180" value="15" step="5" oninput="updateTimer()" />
+    </div>
     <div id="resultDisplay"></div>
   </div>
   <script>
     window.onload = function () {
       let modelSentence = "";
-      let displayDuration = 3;
+      let displayDuration = 15; // Default 15 seconds
       
       // Get DOM elements
       const modelInput = document.getElementById("modelInput");
@@ -73,21 +110,35 @@
       const practiceInput = document.getElementById("practiceInput");
       const submitButton = document.getElementById("submitButton");
       
-      // Add Enter key event listener for model input
+      // Add Enter key event listener for model input (Ctrl+Enter)
       modelInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && event.ctrlKey) {
           event.preventDefault();
           startButton.click();
         }
       });
       
-      // Add Enter key event listener for practice input
+      // Add Enter key event listener for practice input (Ctrl+Enter)
       practiceInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && event.ctrlKey) {
           event.preventDefault();
           submitButton.click();
         }
       });
+      
+      window.updateHeight = function () {
+        const slider = document.getElementById("heightSlider");
+        const rows = parseInt(slider.value);
+        document.getElementById("heightValue").textContent = rows;
+        modelInput.rows = rows;
+      };
+      
+      window.updatePracticeHeight = function () {
+        const slider = document.getElementById("practiceHeightSlider");
+        const rows = parseInt(slider.value);
+        document.getElementById("practiceHeightValue").textContent = rows;
+        practiceInput.rows = rows;
+      };
       
       window.setModel = function () {
         const input = modelInput.value.trim();
@@ -95,6 +146,13 @@
           modelSentence = input;
           document.getElementById("model-section").style.display = "none";
           document.getElementById("practice-section").style.display = "block";
+          
+          // Copy the height setting to practice area
+          const modelRows = modelInput.rows;
+          practiceInput.rows = modelRows;
+          document.getElementById("practiceHeightSlider").value = modelRows;
+          document.getElementById("practiceHeightValue").textContent = modelRows;
+          
           practiceInput.focus();
         }
       };
@@ -113,39 +171,84 @@
           return; // Don't submit empty input
         }
         
-        const modelWords = modelSentence.split(" ");
-        const inputWords = practice.split(" ");
+        // Split by words while preserving newlines
+        const modelTokens = modelSentence.split(/(\s+)/); // This includes spaces and newlines as tokens
+        const inputTokens = practice.split(/(\s+)/);
+        
         let resultHTML = "";
         
-        for (let i = 0; i < modelWords.length; i++) {
-          if (i < inputWords.length && inputWords[i] === modelWords[i]) {
+        for (let i = 0; i < modelTokens.length; i++) {
+          const modelToken = modelTokens[i];
+          
+          // Skip processing whitespace tokens, just add them as is
+          if (modelToken.match(/^\s+$/)) {
+            resultHTML += modelToken;
+            continue;
+          }
+          
+          // Find the corresponding input token (skipping whitespace)
+          let inputToken = "";
+          let inputIndex = -1;
+          
+          for (let j = i; j < inputTokens.length; j++) {
+            if (!inputTokens[j].match(/^\s+$/)) {
+              inputToken = inputTokens[j];
+              inputIndex = j;
+              break;
+            }
+          }
+          
+          if (inputIndex >= 0 && inputToken === modelToken) {
             // Correct word
-            resultHTML += modelWords[i] + " ";
+            resultHTML += modelToken;
+            // Remove processed tokens to avoid reprocessing
+            inputTokens.splice(0, inputIndex + 1);
+            i += (inputIndex - i);
           } else {
-            // Incorrect or missing word - show wrong input and correct word
-            if (i < inputWords.length) {
+            // Incorrect or missing word
+            if (inputToken) {
               // User typed a word but it's incorrect
-              resultHTML += `<span class="text-red">${inputWords[i]}</span> <span class="text-green">${modelWords[i]}</span> `;
+              resultHTML += `<span class="correction"><span class="text-green">${modelToken}</span><span class="text-red">${inputToken}</span></span>`;
+              // Remove the processed token
+              inputTokens.splice(0, inputIndex + 1);
+              i += (inputIndex - i);
             } else {
               // User didn't type this word (missing)
-              resultHTML += `<span class="text-red">[missing]</span> <span class="text-green">${modelWords[i]}</span> `;
+              resultHTML += `<span class="correction"><span class="text-green">${modelToken}</span><span class="text-red">[missing]</span></span>`;
             }
           }
         }
         
         // Extra words typed by user
-        for (let i = modelWords.length; i < inputWords.length; i++) {
-          resultHTML += `<span class="text-yellow">${inputWords[i]} [extra]</span> `;
+        let extraHTML = "";
+        for (let i = 0; i < inputTokens.length; i++) {
+          if (!inputTokens[i].match(/^\s+$/)) {
+            extraHTML += `<span class="text-yellow">${inputTokens[i]} [extra]</span> `;
+          }
         }
         
-        resultDiv.innerHTML = resultHTML.trim();
+        if (extraHTML) {
+          resultHTML += "<div><strong>Extra content:</strong> " + extraHTML + "</div>";
+        }
+        
+        resultDiv.innerHTML = resultHTML;
         practiceInput.value = "";
         practiceInput.focus(); // Keep focus for next attempt
         
-        setTimeout(() => {
+        // Clear after specified time
+        if (window.resultTimer) {
+          clearTimeout(window.resultTimer);
+        }
+        
+        window.resultTimer = setTimeout(() => {
           resultDiv.innerHTML = "";
         }, displayDuration * 1000);
       };
+      
+      // Initialize height sliders
+      updateHeight();
+      updatePracticeHeight();
+      updateTimer();
     };
   </script>
 </body>
