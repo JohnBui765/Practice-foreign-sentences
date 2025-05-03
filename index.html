@@ -6,150 +6,231 @@
   <title>Sentence Practice</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', sans-serif;
       margin: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      color: #333;
+      line-height: 1.6;
     }
+
+    h2 {
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-container {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
     textarea {
-      padding: 0.5rem;
+      padding: 0.75rem;
       font-size: 1rem;
       width: 100%;
-      max-width: 400px;
-      resize: vertical; /* Allow resizing */
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-family: inherit;
+      resize: both;
+      min-height: 3rem;
+      max-height: 50vh;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
+
+    textarea:focus {
+      border-color: #0070f3;
+      box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
+      outline: none;
+    }
+
+    .resize-indicator {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid #999;
+      border-bottom: 2px solid #999;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .slider-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 1rem 0;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+
     button {
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       margin-top: 0.5rem;
       font-size: 1rem;
       cursor: pointer;
+      background-color: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      transition: background-color 0.2s ease, transform 0.1s ease;
     }
+
+    button:hover {
+      background-color: #0051b3;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
     .hidden {
       display: none;
     }
+
     .text-red {
-      color: red;
+      color: #ff3b30;
+      text-decoration: line-through;
     }
+
     .text-green {
-      color: green;
-      font-weight: bold;
+      color: #34c759;
+      font-weight: 500;
     }
+
     .text-yellow {
-      color: orange;
+      color: #ff9500;
+      font-style: italic;
     }
+
     #resultDisplay {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       font-size: 1.2rem;
       min-height: 1.5em;
-      text-align: center;
+      text-align: left;
       line-height: 1.8;
+      width: 100%;
+      max-width: 600px;
     }
-    .word-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+
+    .settings-value {
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
   <div id="model-section">
-    <h2>Enter the model sentence:</h2>
-    <textarea id="modelInput" placeholder="Type the sentence to memorize" rows="3"></textarea>
+    <h2>Enter the Sentence to Memorize</h2>
+    <div class="input-container">
+      <textarea id="modelInput" placeholder="Type the sentence or paragraph to memorize"></textarea>
+      <div class="resize-indicator"></div>
+    </div>
     <button id="startButton" onclick="setModel()">Start Practice</button>
   </div>
+
   <div id="practice-section" class="hidden">
     <h2>Practice Area</h2>
-    <textarea id="practiceInput" placeholder="Type the sentence from memory" rows="3"></textarea>
+    <div class="input-container">
+      <textarea id="practiceInput" placeholder="Type the sentence or paragraph from memory"></textarea>
+      <div class="resize-indicator"></div>
+    </div>
+
+    <div class="slider-container">
+      <div class="slider-label">
+        <span>Result Display Time</span>
+        <span class="settings-value"><span id="timerValue">5</span> seconds</span>
+      </div>
+      <input type="range" id="timerSlider" min="5" max="180" value="5" step="5" oninput="updateTimer()" />
+    </div>
+
     <button id="submitButton" onclick="submitPractice()">Submit</button>
-    <p>Display time: <span id="timerValue">5</span> sec</p>
-    <input type="range" id="timerSlider" min="5" max="180" step="5" value="5" oninput="updateTimer()" />
     <div id="resultDisplay"></div>
   </div>
+
   <script>
     window.onload = function () {
       let modelSentence = "";
       let displayDuration = 5;
-      
-      // Get DOM elements
+
       const modelInput = document.getElementById("modelInput");
-      const startButton = document.getElementById("startButton");
       const practiceInput = document.getElementById("practiceInput");
+      const startButton = document.getElementById("startButton");
       const submitButton = document.getElementById("submitButton");
-      
-      // Add Enter key event listener for model input
+
       modelInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           startButton.click();
         }
       });
-      
-      // Add Enter key event listener for practice input
+
       practiceInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           submitButton.click();
         }
       });
-      
-      window.setModel = function () {
-        const input = modelInput.value.trim();
-        if (input) {
-          modelSentence = input;
-          document.getElementById("model-section").style.display = "none";
-          document.getElementById("practice-section").style.display = "block";
-          practiceInput.focus();
-        }
-      };
-      
+
       window.updateTimer = function () {
         const slider = document.getElementById("timerSlider");
         displayDuration = parseInt(slider.value);
         document.getElementById("timerValue").textContent = displayDuration;
       };
-      
+
+      window.setModel = function () {
+        const input = modelInput.value.trim();
+        if (input) {
+          modelSentence = input;
+          document.getElementById("model-section").classList.add("hidden");
+          document.getElementById("practice-section").classList.remove("hidden");
+          practiceInput.focus();
+        }
+      };
+
       window.submitPractice = function () {
         const practice = practiceInput.value.trim();
         const resultDiv = document.getElementById("resultDisplay");
-        
-        if (!practice) {
-          return; // Don't submit empty input
-        }
-        
+
+        if (!practice) return;
+
         const modelWords = modelSentence.split(" ");
         const inputWords = practice.split(" ");
         let resultHTML = "";
-        
-        for (let i = 0; i < modelWords.length; i++) {
-          if (i < inputWords.length && inputWords[i] === modelWords[i]) {
-            // Correct word
-            resultHTML += `<div class="word-group"><span class="text-green">${modelWords[i]}</span></div>`;
+
+        modelWords.forEach((word, i) => {
+          if (i < inputWords.length && inputWords[i] === word) {
+            resultHTML += `${word} `;
           } else {
-            // Incorrect or missing word - show wrong input and correct word
-            if (i < inputWords.length) {
-              // User typed a word but it's incorrect
-              resultHTML += `<div class="word-group"><span class="text-green">${modelWords[i]}</span><span class="text-red">${inputWords[i]}</span></div>`;
-            } else {
-              // User didn't type this word (missing)
-              resultHTML += `<div class="word-group"><span class="text-green">${modelWords[i]}</span><span class="text-red">[missing]</span></div>`;
-            }
+            resultHTML += i < inputWords.length
+              ? `<span class="text-red">${inputWords[i]}</span> <span class="text-green">${word}</span> `
+              : `<span class="text-red">[missing]</span> <span class="text-green">${word}</span> `;
           }
-        }
-        
-        // Extra words typed by user
-        for (let i = modelWords.length; i < inputWords.length; i++) {
-          resultHTML += `<span class="text-yellow">${inputWords[i]} [extra]</span> `;
-        }
-        
+        });
+
+        inputWords.slice(modelWords.length).forEach(extraWord => {
+          resultHTML += `<span class="text-yellow">${extraWord} [extra]</span> `;
+        });
+
         resultDiv.innerHTML = resultHTML.trim();
         practiceInput.value = "";
-        practiceInput.focus(); // Keep focus for next attempt
-        
-        setTimeout(() => {
-          resultDiv.innerHTML = "";
-        }, displayDuration * 1000);
+        practiceInput.focus();
+
+        setTimeout(() => (resultDiv.innerHTML = ""), displayDuration * 1000);
       };
     };
   </script>
